@@ -45,5 +45,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 func registeredRules() []rule {
 	return []rule{
 		&rules.LowercaseRule{},
+		&rules.EnglishOnlyRule{},
 	}
 }
