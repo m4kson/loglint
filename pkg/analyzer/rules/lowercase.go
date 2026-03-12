@@ -6,9 +6,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"golang.org/x/tools/go/analysis"
-
 	"github.com/m4kson/loglint/pkg/analyzer/detector"
+	"golang.org/x/tools/go/analysis"
 )
 
 type LowercaseRule struct{}
