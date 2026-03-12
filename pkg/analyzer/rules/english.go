@@ -11,7 +11,6 @@ import (
 
 type EnglishOnlyRule struct{}
 
-// Name returns the rule identifier.
 func (r *EnglishOnlyRule) Name() string { return "english-only" }
 
 func (r *EnglishOnlyRule) Check(pass *analysis.Pass, call detector.Call) {

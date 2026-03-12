@@ -46,5 +46,6 @@ func registeredRules() []rule {
 	return []rule{
 		&rules.LowercaseRule{},
 		&rules.EnglishOnlyRule{},
+		&rules.NoSpecialCharsRule{},
 	}
 }
