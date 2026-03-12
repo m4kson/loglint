@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"github.com/m4kson/loglint/pkg/analyzer/rules"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 
@@ -42,5 +43,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 }
 
 func registeredRules() []rule {
-	return []rule{}
+	return []rule{
+		&rules.LowercaseRule{},
+	}
 }
