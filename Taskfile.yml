@@ -1,0 +1,86 @@
+version: '3'
+
+# Глобальные переменные проекта
+vars:
+  GO_VERSION: '1.25'
+  GOLANGCI_LINT_VERSION: 'v2.1.5'
+  GCI_VERSION: 'v0.13.6'
+  GOFUMPT_VERSION: 'v0.8.0'
+
+  BIN_DIR: '{{.ROOT_DIR}}/bin'
+  GOLANGCI_LINT: '{{.BIN_DIR}}/golangci-lint'
+  GCI: '{{.BIN_DIR}}/gci'
+  GOFUMPT: '{{.BIN_DIR}}/gofumpt'
+
+tasks:
+  install-formatters:
+    desc: "Устанавливает форматтеры gci и gofumpt в ./bin"
+    summary: |
+      Эта задача проверяет наличие инструментов форматирования кода gofumpt и gci в директории bin.
+      Если инструменты не найдены, они будут автоматически установлены с указанными версиями.
+      
+      Используется:
+        - gofumpt: для форматирования кода Go
+        - gci: для сортировки импортов Go
+    cmds:
+      - |
+        [ -f {{.GOFUMPT}} ] || {
+          echo 'Устанавливаем gofumpt {{.GOFUMPT_VERSION}}...'
+          GOBIN={{.BIN_DIR}} go install mvdan.cc/gofumpt@{{.GOFUMPT_VERSION}}
+        }
+        [ -f {{.GCI}} ] || {
+          echo 'Устанавливаем gci {{.GCI_VERSION}}...'
+          GOBIN={{.BIN_DIR}} go install github.com/daixiang0/gci@{{.GCI_VERSION}}
+        }
+    status:
+      - test -x {{.GOFUMPT}}
+      - test -x {{.GCI}}
+
+  format:
+    desc: "Форматирует весь проект gofumpt + gci"
+    summary: |
+      Форматирует все Go-файлы проекта с использованием gofumpt для стандартизации кода
+      и gci для сортировки импортов.
+      
+      Использует инструменты:
+        - gofumpt: для стандартизации форматирования
+        - gci: для сортировки импортов по стандартным группам
+    deps: [ install-formatters ]
+    cmds:
+      - |
+        echo "Форматируем через gofumpt ..."
+        find . -type f -name '*.go' ! -path '*/mocks/*' -exec {{.GOFUMPT}} -extra -w {} +
+      - |
+        echo "Сортируем импорты через gci ..."
+        find . -type f -name '*.go' ! -path '*/mocks/*' -exec {{.GCI}} write -s standard -s default -s "prefix(github.com/olezhek28/microservices-course-olezhek-solution)" {} +
+
+  install-golangci-lint:
+    desc: "Устанавливает golangci-lint в каталог bin"
+    summary: |
+      Проверяет наличие golangci-lint в директории bin.
+      Если инструмент не найден, автоматически устанавливает его через go install.
+      
+      Устанавливаемая версия: {{.GOLANGCI_LINT_VERSION}}
+    cmds:
+      - |
+        [ -f {{.GOLANGCI_LINT}} ] || {
+          mkdir -p {{.BIN_DIR}}
+          echo "Устанавливаем golangci-lint {{.GOLANGCI_LINT_VERSION}}..."
+          GOBIN={{.BIN_DIR}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+        }
+    status:
+      - test -x {{.GOLANGCI_LINT}}
+
+  lint:
+    desc: "Запускает golangci-lint для проекта"
+    summary: |
+      Запускает линтер golangci-lint для проекта.
+      Линтер проверяет код на соответствие стандартам качества и лучшим практикам.
+      
+      Зависимости:
+        - install-golangci-lint: автоматически устанавливает линтер
+    deps: [ install-golangci-lint ]
+    cmds:
+      - |
+        echo "Запускаем линтер ..."
+        {{.GOLANGCI_LINT}} run ./... --config=.golangci.yml
