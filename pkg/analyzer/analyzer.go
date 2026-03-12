@@ -1,10 +1,9 @@
 package analyzer
 
 import (
+	"github.com/m4kson/loglint/pkg/analyzer/detector"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
-
-	"github.com/m4kson/loglint/pkg/analyzer/detector"
 )
 
 const (
