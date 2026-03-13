@@ -195,12 +195,16 @@ func (r *NoSpecialCharsRule) Check(pass *analysis.Pass, call detector.Call) {
 }
 
 func classifyBadRune(ch rune) string {
-	switch {
-	case unicode.Is(emojiRangeTable, ch):
-		return "emoji"
-	case unicode.IsControl(ch):
-		return "control characters"
-	default:
+	if ch >= 0x20 && ch <= 0x7E {
+		if ch != ' ' && ch != '%' && !unicode.IsLetter(ch) && !unicode.IsDigit(ch) {
+			return "special characters"
+		}
 		return ""
 	}
+
+	if unicode.Is(emojiRangeTable, ch) {
+		return "emoji"
+	}
+
+	return ""
 }
