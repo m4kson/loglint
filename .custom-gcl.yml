@@ -1,0 +1,11 @@
+version: v2.1.5
+
+name: custom-gcl
+
+destination: ./bin
+
+plugins:
+  - module: github.com/m4kson/loglint
+    path: .
+    import: github.com/m4kson/loglint/plugin
+
