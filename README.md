@@ -264,12 +264,14 @@ loglint ./...
 Минимальный пример:
 
 ```yaml
-version: v2.1.5          # версия golangci-lint, с которой вы хотите собрать кастомный бинарник
-name: custom-gcl         # имя итогового бинаря
-destination: ./bin       # куда положить бинарь
+version: v2.1.5
+name: custom-gcl
+destination: ./bin
 
 plugins:
   - module: github.com/m4kson/loglint
+    version: v0.1.0
+    import: github.com/m4kson/loglint/plugin
     # Если вы используете loglint как обычную go-зависимость из Go proxy,
     # достаточно module + version. В большинстве случаев import не нужен,
     # так как плагин регистрируется в подпакете plugin.
