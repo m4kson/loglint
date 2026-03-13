@@ -17,7 +17,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
 
       - name: Run tests
         run: go test ./...
@@ -27,37 +27,50 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
 
+    env:
+      GOLANGCI_LINT_VERSION: v2.1.5
+      GOWORK: off
+
     steps:
-      - name: Checkout
+      - name: Checkout loglint
         uses: actions/checkout@v4
+        with:
+          path: loglint
+
+      - name: Clone golangci-lint
+        run: |
+          git clone \
+            --branch ${{ env.GOLANGCI_LINT_VERSION }} \
+            --single-branch \
+            --depth 1 \
+            https://github.com/golangci/golangci-lint.git \
+            golangci-lint-src
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      - name: Upgrade git
+      - name: Build custom golangci-lint binary
         run: |
-          sudo add-apt-repository ppa:git-core/ppa -y
-          sudo apt-get update -y
-          sudo apt-get install -y git
-          git --version
+          PLUGIN_MODULE=$(cd loglint && go list -m)
+          PLUGIN_PATH=$(pwd)/loglint
 
-      - name: Install golangci-lint
-        run: |
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.5
+          cd golangci-lint-src
 
-      - name: Configure git safe directory
-        run: |
-          git config --global advice.detachedHead false
-          git config --global --add safe.directory '*'
+          # Подключаем плагин через replace — не нужно пушить тег
+          go get "${PLUGIN_MODULE}@v0.0.0" || true
+          go mod edit -replace "${PLUGIN_MODULE}=${PLUGIN_PATH}"
+          go mod tidy
 
-      - name: Build custom golangci-lint with loglint plugin
-        run: |
-          golangci-lint custom -v
+          # Импортируем side-effect пакет плагина (регистрирует анализатор)
+          PLUGIN_IMPORT=$(cd "${PLUGIN_PATH}" && go list ./plugin/)
+          printf '\npackage main\nimport _ "%s"\n' "${PLUGIN_IMPORT}" \
+            > cmd/golangci-lint/plugin_loglint.go
 
-      - name: Run golangci-lint (custom-gcl)
-        env:
-          GOWORK: off
+          go build -o ../loglint/bin/custom-gcl ./cmd/golangci-lint/
+
+      - name: Run custom golangci-lint
+        working-directory: loglint
         run: |
           ./bin/custom-gcl run ./... --config=.golangci.yml
